@@ -1,15 +1,7 @@
-;; difference                                          ;;
-;; a drawing api                                       ;;
-;;                                                     ;;
-;; difference.lisp                                     ;;
-;;                                                     ;;
-;; Goal:                                               ;;
-;; (defun main()                                       ;;
-;;   (setup(setup your sketch's initial runtime here)) ;;
-;;   (draw(adapt a drawing loop)))                     ;;
-;;                                                     ;;
-;; enjoy! \o/ rage!  jabbar: mgs@informalcode.com      ;;
-;;-----------------------------------------------------;;
+;; difference ;;
+;; a drawing api ;;
+;; 
+;; difference.lisp ;;
 (in-package #:difference)
 
 ;;; Structures
@@ -33,8 +25,8 @@
 
 ;;; Initialize a turtle to start
 (defparameter *turtle*
-  (make-turtle :x         (/ *width* 2)
-	       :y         (/ *height* 2)
+  (make-turtle :x (/ *width* 2)
+	       :y (/ *height* 2)
 	       :direction 0
 	       :pen-state nil
 	       :color sdl:*black*))
@@ -47,10 +39,11 @@
 (defparameter *last-color* nil)
 
 ;;; Toggles (Booleans)
-(defparameter *smoothing* nil)
-(defparameter *anti-aliasing* nil)
-(defparameter *cursor-visible* t)
-(defparameter *unicode* t)
+(defvar *smoothing*)
+(defvar *anti-aliasing*)
+(defvar *cursor-visible*)
+(defvar *unicode*)
+(defvar *show-fps*)
 
 ;;; Font
 (defparameter *current-font* sdl:*FONT-5X7*)
@@ -61,7 +54,7 @@
 (defparameter *random-number* (random 1000))
 
 ;;; Surfaces
-(defparameter *current-surface*  sdl:*default-surface*)
+(defparameter *current-surface* sdl:*default-surface*)
 
 ;;; Getters
 (defun get-x ()
@@ -80,15 +73,15 @@
 (defun nilp (object)
   (eq object nil))
 
-; Variables
-(defparameter *x* (get-x))
-(defparameter *y* (get-y))
-(defparameter *direction* (get-direction))
+					; Variables
+(defparameter *x* (round (get-x)))
+(defparameter *y* (round (get-y)))
+(defparameter *direction* (round (get-direction)))
 (defparameter *pen-state* (get-pen-state))
-(defparameter *turtle-surface* nil)
+(defparameter *canvas-surface* nil)
 (defparameter *current-weapon* 'fist)
 
-; Turtle Geometry Functions
+					; Turtle Geometry Functions
 (defun pen-down ()
   "Set the pen down to begin drawing by issuing this command. A side effect is that *pen-state* is set to t."
   (setf (turtle-pen-state *turtle*) t)
@@ -118,7 +111,7 @@
       (incf (turtle-x *turtle*) dx)
       (incf (turtle-y *turtle*) dy)
       (when *pen-state*
-	(sdl:draw-line-* x y (get-x) (get-y)))))
+	(sdl:draw-line-* x y (get-x) (get-y) :surface *canvas-surface*))))
   (update))
 
 (defun backward (steps)
@@ -127,6 +120,7 @@
   (update))
 
 (defun update ()
+  (sdl:blit-surface *canvas-surface*)
   (setf *x* (round (turtle-x *turtle*)))
   (setf *y* (round (turtle-y *turtle*)))
   (setf *direction* (round (turtle-direction *turtle*)))
@@ -149,8 +143,9 @@
     (setf (turtle-x *turtle*) 200)
     (setf (turtle-y *turtle*) 200)
     (setf (turtle-direction *turtle*) 200)
-    (setf *turtle-surface* (sdl:create-surface *width* *height*))
-    (sdl:clear-display sdl:*white*)
+    (setf *canvas-surface*
+          (sdl:convert-to-display-format :surface (sdl:create-surface *width* *height*) :free t))
+    (sdl:clear-display sdl:*white* :surface *canvas-surface*)
     (sdl:update-display)
     (sdl:with-events ()
       (:quit-event () t)
@@ -162,10 +157,10 @@
 	     (sdl:update-display)))))
 
 (defun draw-turtle ()
-	     (pen-down)
-	     (forward 20)
-	     (right (random 90))
-	     (right (random 30)))
+  (pen-down)
+  (forward 20)
+  (right (random 90))
+  (right (random 30)))
 
 ;;; Main
 (defmethod main ()
@@ -173,10 +168,10 @@
     (sdl:window *width* *height* :title-caption "difference")
     (setf (sdl:frame-rate) *frame-rate*)
     ;; Setup Block
-;    (setup)
+					; (setup)
     (sdl:with-events ()
-      (:quit-event () t)      
-      (:key-down-event ()		 
+      (:quit-event () t)
+      (:key-down-event ()
 		       (if (sdl:key-pressed-p :SDL-KEY-ESCAPE) (sdl:push-quit-event))
 		       (if (sdl:key-pressed-p :SDL-KEY-UP) (move-north))
 		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (move-south))
@@ -196,17 +191,17 @@
 		       (if (sdl:key-pressed-p :SDL-KEY-CONTROL) (fire-weapon *current-weapon*)))
       (:idle ()
 	     ;; Draw Block
-	     (draw-turtle) 
+	     (draw-turtle)
 	     (sdl:update-display)))))
 
 ;; Setup
 (defun setup ()
   (sdl:enable-key-repeat 100 50)
   (clear))
-  
+
 ;; Draw
-;(defun draw (&aux (x (round (get-turtle-x))) (y (round (get-turtle-y))))
-;  (clear))
+					;(defun draw (&aux (x (round (get-turtle-x))) (y (round (get-turtle-y))))
+					; (clear))
 
 (defun which (key)
   (case key
@@ -296,8 +291,8 @@
 (defun bezier (vertices
 	       &key (color *stroke-color*) (segments 20) (style :solid))
   (sdl:draw-bezier vertices :color color
-  		            :segments segments
-		            :style style))
+		   :segments segments
+		   :style style))
 
 (defun polygon (vertices
 		&key (color *stroke-color*) (surface sdl:*default-surface*) (clipping t))
@@ -306,7 +301,7 @@
 
 (defun letter (index)
   (let ((alphabet (loop for i from 97 to 122
-		      collecting (code-char i))))
+		     collecting (code-char i))))
     (format nil "~a"
 	    (nth (- index 1) alphabet))))
 
@@ -328,7 +323,7 @@
 
 (defun background (&key (r 0) (g 0) (b 0))
   (setf *background-color* (sdl:color :r r :g g :b b)))
-  
+
 ;;; Typography
 (defun text (string x y
 	     &key (surface *current-surface*) (font *current-font*) (color *font-color*))
@@ -336,32 +331,32 @@
 
 ;; Iteration
 ;; requires iterate package
-;(defun range (&key (start 0) (end (+ start 100)))
-  ;(iter (for i from start to end)
-	;(collect i)))
+					;(defun range (&key (start 0) (end (+ start 100)))
+					;(iter (for i from start to end)
+					;(collect i)))
 
 ;; OS Integration
 (defun exec (name
 	     &rest args)
   (sb-ext:run-program name args :output *standard-output*
-		                :search t))
+		      :search t))
 
 ;;; try/catch
 
-;(defun try ((try-statements) catch-exception (catch-statements)) ())
+					;(defun try ((try-statements) catch-exception (catch-statements)) ())
 
 ;;; Benchmarking
 
-;(defun benchmark ()
-;  (format t "~a" (sdl:average-fps)))
+					;(defun benchmark ()
+					; (format t "~a" (sdl:average-fps)))
 
 ;; I/O
 (defun cat (filename)
-      (with-open-file (str filename :direction :input)
-	(do ((line (read-line str nil 'eof)
-		   (read-line str nil 'eof)))
-	    ((eql line 'eof))
-	  (format t "~A~%" line))))
+  (with-open-file (str filename :direction :input)
+    (do ((line (read-line str nil 'eof)
+	       (read-line str nil 'eof)))
+	((eql line 'eof))
+      (format t "~A~%" line))))
 
 ;; Common Inputs
 (defun ask (question expected-type)
@@ -408,11 +403,11 @@
 
 (defun invert (target)
   (let* ((m00 (matrix-m00 target))
-	(m01 (matrix-m01 target))
-	(m02 (matrix-m02 target))
-	(m10 (matrix-m10 target))
-	(m11 (matrix-m11 target))
-	(m12 (matrix-m02 target)))
+	 (m01 (matrix-m01 target))
+	 (m02 (matrix-m02 target))
+	 (m10 (matrix-m10 target))
+	 (m11 (matrix-m11 target))
+	 (m12 (matrix-m02 target)))
     (let ((t00 m00)
 	  (t01 m01)
 	  (t02 m02)
@@ -430,22 +425,22 @@
   (apply #'mapcar #'list matrix))
 
 ;;; Utility Functions
-;(defmacro def (name args &body body)
-;  "Synonym for defun"
-;  `(defun ,name ,args
-;     ,@body))
+					;(defmacro def (name args &body body)
+					; "Synonym for defun"
+					; `(defun ,name ,args
+					; ,@body))
 
-;(defun combiner (x)
-;  (typecase x
-;    (number #'+)
-;    (list #'append)
-;    (t #'list)))
+					;(defun combiner (x)
+					; (typecase x
+					; (number #'+)
+					; (list #'append)
+					; (t #'list)))
 
-;(defun combine (&rest args)
-;  (apply (combiner (car args))
-;	 args))
-;(defun background (&key (red 0) (green 0) (blue 0))
-;  (sdl:fill-surface-* red green blue :surface *current-surface*)
-;  (setf *background-color* (sdl:color :r red :g green :b blue)))
-;  (sdl:color-* *background-color*)
-;  (sdl:clear-display *background-color*))
+					;(defun combine (&rest args)
+					; (apply (combiner (car args))
+					; args))
+					;(defun background (&key (red 0) (green 0) (blue 0))
+					; (sdl:fill-surface-* red green blue :surface *current-surface*)
+					; (setf *background-color* (sdl:color :r red :g green :b blue)))
+					; (sdl:color-* *background-color*)
+					; (sdl:clear-display *background-color*))
