@@ -29,11 +29,16 @@
   (direction 0)
   (pen-state nil)
   (color sdl:*black*))
+;;; Structures
+(defstruct matrix
+  "3x2 Affine Matrix"
+  (m00 0.0) (m01 0.0) (m02 0.0)
+  (m10 0.0) (m11 0.0) (m12 0.0))
 
 ; Environment
 (defparameter *width* 400)
 (defparameter *height* 400)
-(defparameter *frame-rate* 60)
+(defparameter *frame-rate* 20)
 
 ; Initialize a turtle
 (defparameter *turtle*
@@ -50,7 +55,7 @@
 (defparameter *font-color* sdl:*white*)
 (defparameter *last-color* nil)
 
-;; ;;; Toggles (Booleans)
+;;; Toggles (Booleans)
 (defvar *smoothing*)
 (defvar *anti-aliasing*)
 (defvar *cursor-visible*)
@@ -68,8 +73,7 @@
 ;;; Surfaces
 (defparameter *current-surface*  sdl:*default-surface*)
 
-
-; "Getters"
+;;; Getters
 (defun get-x ()
   (round (turtle-x *turtle*)))
 
@@ -82,12 +86,17 @@
 (defun get-pen-state ()
   (turtle-x *turtle*))
 
+;;; Predicates
+(defun nilp (object)
+  (eq object nil))
+
 ; Variables
 (defparameter *x* (round (get-x)))
 (defparameter *y* (round (get-y)))
 (defparameter *direction* (round (get-direction)))
 (defparameter *pen-state* (get-pen-state))
 (defparameter *turtle-surface* nil)
+(defparameter *current-weapon* 'fist)
 
 ; Turtle Geometry Functions
 (defun pen-down ()
@@ -98,11 +107,11 @@
   (setf (turtle-pen-state *turtle*) nil)
   (setf *pen-state* (turtle-pen-state *turtle*)))
 
-(defun left (degrees)
+(defun left (&optional (degrees 1))
   (decf (turtle-direction *turtle*) degrees)
   (update))
 
-(defun right (degrees)
+(defun right (&optional (degrees 1))
   (incf (turtle-direction *turtle*) degrees)
   (update))
 
@@ -124,15 +133,19 @@
   (update))
 
 (defun update ()
-  (setf *x* (truncate (turtle-x *turtle*) 2))
-  (setf *y* (truncate (turtle-y *turtle*) 2))
-  (setf *direction* (truncate  (turtle-direction *turtle*) 2))
-  (let ((dx (* (sin (turtle-direction *turtle*))))
-	(dy (* (sin (turtle-direction *turtle*)))))
-    (sdl:draw-trigon (sdl:point :x (* dx (+ 0 (get-x))) :y (* dy (+ 0 (get-y))))
-		     (sdl:point :x (* dx (+ (get-x))) :y (* dy (+ 6 (get-y))))
-		     (sdl:point :x (* dx (+ 6 (get-x))) :y (* dy (+ 0 (get-y))))))
+  (setf *x* (round (turtle-x *turtle*)))
+  (setf *y* (round (turtle-y *turtle*)))
+  (setf *direction* (round (turtle-direction *turtle*)))
+  (let ((angle (* (turtle-direction *turtle*) (/ pi 180.0))))
+    (let ((sin1 (sin angle))
+          (cos1 (cos angle)))
+      (sdl:draw-trigon (sdl:point :x (get-x) :y (get-y))
+                       (sdl:point :x (+ (get-x) (* 5 cos1) (* -5 sin1))
+                                  :y (+ (get-y) (* -5 sin1) (* -5 cos1)))
+                       (sdl:point :x (+ (get-x) (* -5 cos1) (* -5 sin1))
+                                  :y (+ (get-y) (* 5 sin1) (* -5 cos1))))))
   *turtle*)
+
 
 (defmethod turtle ()
   (sdl:with-init ()
@@ -160,32 +173,6 @@
 	     (right (random 90))
 	     (right (random 30)))
 
-;; ;;; Environment
-;; (defparameter *window-height*  800)
-;; (defparameter *window-width*  800)
-;; (defparameter *frame-rate*  60)
-
-;;; Structures
-(defstruct point 
-  x
-  y
-  z)
-
-;;; Cursor
-(defstruct cursor
-  x
-  y)
-
-;;; TVector
-(defstruct tvector
-  x y)
-
-;;; 3x2 Affine Matrix
-(defstruct matrix
-  "3x2 Affine Matrix"
-  (m00 0.0) (m01 0.0) (m02 0.0)
-  (m10 0.0) (m11 0.0) (m12 0.0))
-
 ;;; Main
 (defmethod main ()
   (sdl:with-init ()
@@ -196,10 +183,23 @@
     (sdl:with-events ()
       (:quit-event () t)      
       (:key-down-event ()		 
-		       (bind-movement-keys)
-		       (bind-numeric-keys)
-		       (bind-fire-key)
-		       (bind-quit-key))
+		       (if (sdl:key-pressed-p :SDL-KEY-ESCAPE) (sdl:push-quit-event))
+		       (if (sdl:key-pressed-p :SDL-KEY-UP) (move-north))
+		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (move-south))
+		       (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
+		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right))
+		       (if (sdl:key-pressed-p :SDL-KEY-0) (setf *current-weapon* 'fist))
+		       (if (sdl:key-pressed-p :SDL-KEY-1) (setf *current-weapon* 'pistol))
+		       (if (sdl:key-pressed-p :SDL-KEY-2) (setf *current-weapon* 'shotgun))
+		       (if (sdl:key-pressed-p :SDL-KEY-3) (setf *current-weapon* 'machine-gun))
+		       (if (sdl:key-pressed-p :SDL-KEY-4) (setf *current-weapon* 'laser-gun))
+		       (if (sdl:key-pressed-p :SDL-KEY-5) (setf *current-weapon* 'nail-gun))
+		       (if (sdl:key-pressed-p :SDL-KEY-6) (setf *current-weapon* 'assault-rifle))
+		       (if (sdl:key-pressed-p :SDL-KEY-7) (setf *current-weapon* 'dicer-rifle))
+		       (if (sdl:key-pressed-p :SDL-KEY-8) (setf *current-weapon* 'rice-cannon))
+		       (if (sdl:key-pressed-p :SDL-KEY-9) (setf *current-weapon* 'samurai-sword))
+		       (if (sdl:key-pressed-p :SDL-KEY-SPACE) (fire-weapon *current-weapon*))
+		       (if (sdl:key-pressed-p :SDL-KEY-CONTROL) (fire-weapon *current-weapon*)))
       (:idle ()
 	     ;; Draw Block
 	     (draw-turtle) 
@@ -214,101 +214,48 @@
 ;(defun draw (&aux (x (round (get-turtle-x))) (y (round (get-turtle-y))))
 ;  (clear))
 
-;;; Keybindings
-(defun bind-quit-key ()
-  "This defines the key that will cause a running program to stop."
-   (if (sdl:key-pressed-p  :SDL-KEY-ESCAPE) (sdl:push-quit-event)))
-
-(defun bind-movement-keys ()
-  "This function specifies the keys that will be used for player/cursor movement."
-  (if (sdl:key-pressed-p :SDL-KEY-UP) (forward))
-  (if (sdl:key-pressed-p :SDL-KEY-DOWN) (back))
-  (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
-  (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right)))
-
-(defun bind-numeric-keys ()
-  "These keys define how the user will change weapons within the game."
-   (if (sdl:key-pressed-p :SDL-KEY-0) (setf *current-weapon* 'fist))
-   (if (sdl:key-pressed-p :SDL-KEY-1) (setf *current-weapon* 'pistol))
-   (if (sdl:key-pressed-p :SDL-KEY-2) (setf *current-weapon* 'shotgun))
-   (if (sdl:key-pressed-p :SDL-KEY-3) (setf *current-weapon* 'machine-gun))
-   (if (sdl:key-pressed-p :SDL-KEY-4) (setf *current-weapon* 'laser-gun))
-   (if (sdl:key-pressed-p :SDL-KEY-5) (setf *current-weapon* 'nail-gun))
-   (if (sdl:key-pressed-p :SDL-KEY-6) (setf *current-weapon* 'assault-rifle))
-   (if (sdl:key-pressed-p :SDL-KEY-7) (setf *current-weapon* 'dicer-rifle))
-   (if (sdl:key-pressed-p :SDL-KEY-8) (setf *current-weapon* 'rice-cannon))
-   (if (sdl:key-pressed-p :SDL-KEY-9) (setf *current-weapon* 'samurai-sword)))
-
-(defun bind-fire-key ()
-  (if (sdl:key-pressed-p  :SDL-KEY-SPACE) (fire-weapon *current-weapon*)))
-
 (defun which (key)
   (case key
     (help (print "help fucker!"))))
 
 ;; Cursor Movement
 (defun move-north (&optional (steps 5))
-  "Move cursor north on a 2D Grid. Returns the resulting Y-Coordinate."
-  (setf (point-y *position*) (- (point-y *position*) steps)))
+  "Move turtle north on a 2D Grid. Returns the resulting Y-Coordinate."
+  (setf (turtle-y *turtle*) (incf (turtle-y *turtle*) steps)))
 
 (defun move-south (&optional (steps 5))
-  "Move cursor south on a 2D Grid. Returns the resulting Y-Coordinate."
-  (setf (point-y *position*) (+ steps (point-y *position*))))
+  "Move turtle south on a 2D Grid. Returns the resulting Y-Coordinate."
+  (setf (turtle-y *turtle*) (decf (turtle-y *turtle*) steps)))
 
 (defun move-east (&optional (steps 5))
-  "Move cursor east on a 2D Grid. Returns the resulting Y-Coordinate."
-  (setf (point-x *position*) (+ steps (point-x *position*))))
+  "Move turtle east on a 2D Grid. Returns the resulting Y-Coordinate."
+  (setf (turtle-x *turtle*) (incf (turtle-x *turtle*) steps)))
 
 (defun move-west (&optional (steps 5))
   "Move cursor west on a 2D Grid. Returns the resulting Y-Coordinate."
-  (setf (point-x *position*) (- (point-x *position*) steps)))
+  (setf (turtle-x *turtle*) (decf (turtle-x *turtle*) steps)))
 
 (defun fire-weapon (&optional weapon)
   (cond
-    ((equal weapon 'fist)
-     (format t "~A" "pof! *you punch*"))
-    ((equal weapon 'pistol)
-     (format t "~A" "pff! *fired pistol*"))
-    ((equal weapon 'shotgun)
-     (format t "~A" "poof! *fired shotgun*"))
-    ((equal weapon 'machine-gun)
-     (format t "~A" "pff!pff! *fired machinegun*"))
-    ((equal weapon 'laser-gun)
-     (format t "~A" "pew! pew! *fired lazor*"))
-    ((equal weapon 'rice-cannon)
-     (format t "~A" "pif! pif! *fired rice-cannon*"))
-    ((equal weapon 'assault-rifle)
-     (format t "~A" "poof! *fired assault rifle*"))
-    ((equal weapon 'samurai-sword)
-     (format t "~A" "poof! *you slice*"))))
+    ((equal weapon 'fist) (format t "~A~% you hit ~A for ~A damage~%" "pof! *you punch*" (random 100) (random-element '(biker ninja spy loser dork bully))))
+    ((equal weapon 'pistol) (format t "~A~% you hit ~A for ~A damage~%" "pff! *fired pistol*" (random 100) (random-element '(biker ninja spy loser dork bully))))
+    ((equal weapon 'shotgun) (format t "~A~% you hit ~A for ~A damage~%" "poof! *fired shotgun*" (random 100) (random-element '(biker ninja spy loser bully))))
+    ((equal weapon 'machine-gun) (format t "~A~% you hit ~A for ~A damage~%" "pff!pff! *fired machinegun*" (random 100) (random-element '(biker ninja spy loser bully))))
+    ((equal weapon 'laser-gun) (format t "~A~% you hit ~A for ~A damage~%" "pew!pew! *fired lazor*" (random 100) (random-element '(biker ninja spy loser bully))))
+    ((equal weapon 'rice-cannon) (format t "~A~% you hit ~A for ~A damage~%" "pif! pif! *fired rice-cannon*" (random 100) (random-element '(biker ninja spy loser dork bully))))
+    ((equal weapon 'assault-rifle) (format t "~A~% you hit ~A for ~A damage~%" "poof! *fired assault rifle*" (random 100) (random-element '(biker ninja spy loser dork bully))))
+    ((equal weapon 'samurai-sword) (format t "~A~% you hit ~A for ~A damage~%" "poof! *you slice*" (random 100) (random-element '(biker ninja spy loser dork bully))))))
 
 ;;; Drawing Functions
 (defun clear ()
   (sdl:clear-display *background-color*))
 
-;(defun background (&key (red 0) (green 0) (blue 0))
-;  (sdl:fill-surface-* red green blue :surface *current-surface*)
-;  (setf *background-color* (sdl:color :r red :g green :b blue)))
-;  (sdl:color-* *background-color*)
-;  (sdl:clear-display *background-color*))
-
 ;;; Environmental Functions
-  
-(defun get-cursor-position ()
-  *position*)
-
-(defun get-x-position ()
-  (point-x *position*))
-
-(defun get-y-position ()
-  (point-y *position*))
-
 (defun get-frame-rate ()
   (format t "~a fps" *frame-rate*))
 
 (defun frame-rate (fps)
-  (setf *frame-rate* fps)
-  *frame-rate*)
+  (setf *frame-rate* fps))
 
 ;;; Toggles
 
@@ -414,19 +361,21 @@
 ;(defun benchmark ()
 ;  (format t "~a" (sdl:average-fps)))
 
-;(defun pcolor (r g b)
-;  (setf *last-color* *current-color*)
-;  (setf *current-color* (sdl:color r g b)
-;	`(sdl:color-* *current-color*)))
+;; I/O
+(defun cat (filename)
+      (with-open-file (str filename :direction :input)
+	(do ((line (read-line str nil 'eof)
+		   (read-line str nil 'eof)))
+	    ((eql line 'eof))
+	  (format t "~A~%" line))))
 
-;; Maths
-
-;  (draw-dash x y))
-;; (stroke :r (random 200) :g (random 200) :b (random 100))
-;; (loop for i from 1 to 200 by 25 do
-;;      (text "hello" (+ i x) y)
-;;      (circle 400 i i)))
-
+;; Common Inputs
+(defun ask (question expected-type)
+  (format t "~A " question)
+  (let ((response (read)))
+    (if (typep response expected-type)
+	response
+	(ask (format t "~A " question) expected-type))))
 
 ;;; Matrix
 
@@ -501,28 +450,8 @@
 ;(defun combine (&rest args)
 ;  (apply (combiner (car args))
 ;	 args))
-
-;; I/O
-(defun cat (filename)
-      (with-open-file (str filename :direction :input)
-	(do ((line (read-line str nil 'eof)
-		   (read-line str nil 'eof)))
-	    ((eql line 'eof))
-	  (format t "~A~%" line))))
-
-;; Common Inputs
-(defun ask (question expected-type)
-  (format t "~A " question)
-  (let ((response (read)))
-    (if (typep response expected-type)
-	response
-	(ask (format t "~A " question) expected-type))))
-
-(defun get-number ()
-  (ask "Please enter a number:" 'number))
-
-(defun get-string (category)
-  (ask (format t "Please enter a ~A" category) 'string))
-
-(defun nilp (object)
-  (eq object nil))
+;(defun background (&key (red 0) (green 0) (blue 0))
+;  (sdl:fill-surface-* red green blue :surface *current-surface*)
+;  (setf *background-color* (sdl:color :r red :g green :b blue)))
+;  (sdl:color-* *background-color*)
+;  (sdl:clear-display *background-color*))
