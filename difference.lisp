@@ -38,16 +38,9 @@
 (defparameter *font-color* sdl:*white*)
 (defparameter *last-color* nil)
 
-;;; Toggles (Booleans)
-(defvar *smoothing*)
-(defvar *anti-aliasing*)
-(defvar *cursor-visible*)
-(defvar *unicode*)
-(defvar *show-fps*)
-
 ;;; Font
-(defparameter *current-font* sdl:*FONT-5X7*)
 (defparameter *last-font* nil)
+(defparameter *current-font* sdl:*FONT-5X7*)
 (defparameter *random-color* sdl:*black*)
 
 ;;; Numbers
@@ -55,6 +48,7 @@
 
 ;;; Surfaces
 (defparameter *current-surface* sdl:*default-surface*)
+(defparameter *turtle-surface* (sdl:create-surface *width* *height*))
 
 ;;; Getters
 (defun get-x ()
@@ -73,7 +67,7 @@
 (defun nilp (object)
   (eq object nil))
 
-					; Variables
+;;; Variables
 (defparameter *x* (round (get-x)))
 (defparameter *y* (round (get-y)))
 (defparameter *direction* (round (get-direction)))
@@ -239,20 +233,9 @@
 (defun clear ()
   (sdl:clear-display *background-color*))
 
-;;; Environmental Functions
-(defun get-frame-rate ()
-  (format t "~a fps" *frame-rate*))
-
-(defun frame-rate (fps)
-  (setf *frame-rate* fps))
-
-;;; Toggles
-
-(defun show-cursor ()
-  (setf *cursor-visible* t))
-
-(defun show-frame-rate ()
-  (setf *show-fps* t))
+;;; Setters
+(defmacro frame-rate (fps)
+  `(setf *frame-rate* ,fps))
 
 ;;; Shape Primitives
 
