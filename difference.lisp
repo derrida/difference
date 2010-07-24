@@ -47,11 +47,10 @@
 (defparameter *last-color* nil)
 
 ;;; Toggles (Booleans)
-(defvar *smoothing*)
-(defvar *anti-aliasing*)
-(defvar *cursor-visible*)
-(defvar *unicode*)
-(defvar *show-fps*)
+(defparameter *smoothing* nil)
+(defparameter *anti-aliasing* nil)
+(defparameter *cursor-visible* t)
+(defparameter *unicode* t)
 
 ;;; Font
 (defparameter *current-font* sdl:*FONT-5X7*)
@@ -82,9 +81,9 @@
   (eq object nil))
 
 ; Variables
-(defparameter *x* (round (get-x)))
-(defparameter *y* (round (get-y)))
-(defparameter *direction* (round (get-direction)))
+(defparameter *x* (get-x))
+(defparameter *y* (get-y))
+(defparameter *direction* (get-direction))
 (defparameter *pen-state* (get-pen-state))
 (defparameter *turtle-surface* nil)
 (defparameter *current-weapon* 'fist)
