@@ -12,35 +12,26 @@
 ;;-----------------------------------------------------;;
 (in-package #:difference)
 
-;;; Implementation of Turtle Graphics using lispbuilder-sdl.
-;;; This is based on the implementation discussed in Turtle Geometry.
-
-
-; Turtle struct
-;; Keys:
-;;; x           - integer - x-coordinate of the turtle
-;;; y           - integer - y-coordinate of the turtle 
-;;; direction   - integer - angle the turtle's heading
-;;; pen-state   - boolean - defines whether or not the pen is down
-;;; color       - color   - specifies the color the turtle will draw using
+;;; Structures
 (defstruct turtle
+  "Implementation of a graphic turtle per the description in turtle geometry"
   (x 0)
   (y 0)
   (direction 0)
   (pen-state nil)
   (color sdl:*black*))
-;;; Structures
+
 (defstruct matrix
   "3x2 Affine Matrix"
   (m00 0.0) (m01 0.0) (m02 0.0)
   (m10 0.0) (m11 0.0) (m12 0.0))
 
-; Environment
+;;; Environment
 (defparameter *width* 400)
 (defparameter *height* 400)
-(defparameter *frame-rate* 20)
+(defparameter *frame-rate* 30)
 
-; Initialize a turtle
+;;; Initialize a turtle to start
 (defparameter *turtle*
   (make-turtle :x         (/ *width* 2)
 	       :y         (/ *height* 2)
@@ -100,18 +91,22 @@
 
 ; Turtle Geometry Functions
 (defun pen-down ()
+  "Set the pen down to begin drawing by issuing this command. A side effect is that *pen-state* is set to t."
   (setf (turtle-pen-state *turtle*) t)
   (setf *pen-state* (turtle-pen-state *turtle*)))
 
 (defun pen-up ()
+  "Lifts the pen up causing the turtle to stop drawing along its path. A side effect is that *pen-state* is set to nil."
   (setf (turtle-pen-state *turtle*) nil)
   (setf *pen-state* (turtle-pen-state *turtle*)))
 
 (defun left (&optional (degrees 1))
+  "Rotates the turtle X number of degrees COUNTER-CLOCKWISE. If no argument is given, the turtle turns 1 degree counter-clockwise."
   (decf (turtle-direction *turtle*) degrees)
   (update))
 
 (defun right (&optional (degrees 1))
+  "Rotates the turtle X number of degrees CLOCKWISE. If no argument is given, the turtle turns 1 degree clockwise."
   (incf (turtle-direction *turtle*) degrees)
   (update))
 
