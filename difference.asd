@@ -1,14 +1,11 @@
 (defpackage #:difference-system
-  (:use #:cl #:asdf))
+  (:use #:common-lisp #:asdf))
 
 (in-package #:difference-system)
 
 (asdf:defsystem #:difference
   :description "A functional drawing API for Common Lisp. Artists rejoice!"
   :version "0.0.3"
-  :depends-on (#:lispbuilder-sdl #:bordeaux-threads)
+  :depends-on (#:lispbuilder-sdl)
   :components ((:file "package")
-	       (:file "difference" :depends-on ("package"))
-	       (:file "turtle" :depends-on ("difference"))
-	       (:file "utilities" :depends-on ("turtle"))
-	       (:file "matrix" :depends-on ("turtle"))))
+	       (:file "difference" :depends-on ("package"))))
