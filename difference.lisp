@@ -11,7 +11,7 @@
   (x 0) (px 0)
   (y 0) (py 0)
   (direction 0)
-  (pen-state nil)
+  (pen-state t)
   (poly-state nil)
   (color sdl:*black*))
 
@@ -45,17 +45,27 @@
 (defparameter *random-number* (random 1000))
 
 ;;; Getters
+;;; Getters
 (defun get-x ()
   (round (turtle-x *turtle*)))
 
 (defun get-y ()
   (round (turtle-y *turtle*)))
 
+(defun get-x1 ()
+  (round (turtle-x1 *turtle*)))
+
+(defun get-y1 ()
+  (round (turtle-y1 *turtle*)))
+
 (defun get-direction ()
   (round (turtle-direction *turtle*)))
 
 (defun get-pen-state ()
-  (turtle-x *turtle*))
+  (turtle-pen-state *turtle*))
+
+(defun get-poly-state ()
+  (turtle-poly-state *turtle*))
 
 ;;; Predicates
 (defun nilp (object)
@@ -69,8 +79,7 @@
 
 ;;; Surfaces
 (defparameter *current-surface* sdl:*default-surface*)
-(defvar *canvas-surface*)
-(defvar *turtle-surface*)
+(defparameter *canvas-surface* nil)
 
 ;;; Turtle Functions
 (defun left (&optional (degrees 1))
@@ -89,6 +98,10 @@
 	  (y (get-y)))
       (incf (turtle-x *turtle*) dx)
       (incf (turtle-y *turtle*) dy)
+      (when (and (turtle-poly-state *turtle*) (or (/= x (get-x1)) (/= y (get-y1))))
+	(sdl-gfx:draw-filled-trigon (sdl:point :x (get-x1) :y (get-y1))
+				    (sdl:point :x x :y y)
+				    (sdl:point :x (get-x) :y (get-y)) :surface *canvas-surface*))
       (when *pen-state*
 	(sdl:draw-line-* x y (get-x) (get-y) :surface *canvas-surface*))))
   (update))
@@ -97,6 +110,7 @@
   (let ((backward-steps (- 0 steps)))
     (forward backward-steps))
   (update))
+
 
 (defun update ()
   (sdl:blit-surface *canvas-surface*)
@@ -113,46 +127,11 @@
                                   :y (+ (get-y) (* 5 sin1) (* -5 cos1))))))
   *turtle*)
 
-
 (defun pen-down ()
-  (setf (turtle-pen-state *turtle*) t)
-  (setf *pen-state* (turtle-pen-state *turtle*)))
+  (setf (turtle-pen-state *turtle*) t))
 
 (defun pen-up ()
-  (setf (turtle-pen-state *turtle*) nil)
-  (setf *pen-state* (turtle-pen-state *turtle*)))
-
-(defun draw-turtle ()
-  (pen-down)
-  (forward 20)
-  (right (random 90))
-  (right (random 30)))
-
-;;; Main
-(defmethod main ()
-  (sdl:with-init ()
-    (sdl:window *width* *height* :title-caption "difference")
-    (setf (sdl:frame-rate) *frame-rate*)
-    ;; Setup Block
-					; (setup)
-    (sdl:with-events ()
-      (:quit-event () t)
-      (:key-down-event ()
-		       (if (sdl:key-pressed-p :SDL-KEY-ESCAPE) (sdl:push-quit-event))
-		       (if (sdl:key-pressed-p :SDL-KEY-UP) (move-north))
-		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (move-south))
-		       (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
-		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right))
-		       (if (sdl:key-pressed-p :SDL-KEY-0) (setf *current-weapon* 'fist))
-      (:idle ()
-	     ;; Draw Block
-	     (draw-turtle)
-	     (sdl:update-display)))))
-
-;; Setup
-(defun setup ()
-  (sdl:enable-key-repeat 100 50)
-  (clear))
+  (setf (turtle-pen-state *turtle*) nil))
 
 ;;; Drawing Functions
 (defun clear ()
@@ -264,3 +243,34 @@
     (if (typep response expected-type)
 	response
 	(ask (format t "~A " question) expected-type))))
+
+;;; Main
+(defmethod main ()
+  (sdl:with-init ()
+    (sdl:window *width* *height* :title-caption "difference")
+    (setf (sdl:frame-rate) *frame-rate*)
+    ;; Setup Block
+					; (setup)
+    (sdl:with-events ()
+      (:quit-event () t)
+      (:key-down-event ()
+		       (if (sdl:key-pressed-p :SDL-KEY-ESCAPE) (sdl:push-quit-event))
+		       (if (sdl:key-pressed-p :SDL-KEY-UP) (forward 5))
+		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (backward 5))
+		       (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
+		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right))
+      (:idle ()
+	     ;; Draw Block
+	     (draw-turtle)
+	     (sdl:update-display))))))
+
+;; Setup
+(defun setup ()
+  (sdl:enable-key-repeat 100 50)
+  (clear))
+
+(defun draw-turtle ()
+  (pen-down)
+  (forward 20)
+  (right (random 90))
+  (right (random 30)))
