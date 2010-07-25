@@ -10,8 +10,9 @@
 (defstruct turtle
   (x  0) (y  0)
   (px 0) (py 0)
+  (x1 0) (y1 0)
   (direction 0)
-  (pen-state t)
+  (pen-state nil)
   (poly-state nil)
   (color sdl:*black*))
 
@@ -38,6 +39,36 @@
 
 ;;; Numbers
 (defparameter *random-number* (random 1000))
+
+;;; Polygons
+; Draw list of 3D convex polygons
+(defparameter *polygons* '(
+  ((:r 78 :g 114 :b 114)
+   (0 -1 0)
+   (0 -1 1)
+   (-1 -2 1)
+   (-1 -2 0))
+  ((:r 78 :g 114 :b 114)
+   (3 0 0)
+   (3 0 1)
+   (1 -2 1)
+   (1 -2 0))
+  ((:r 78 :g 114 :b 114)
+   (0 3 0)
+   (0 3 1)
+   (3 0 1)
+   (3 0 0))
+  ((:r 255 :g 85 :b 125)
+   (0 3 0)
+   (0 -1 0)
+   (1 -2 0)
+   (3 0 0))
+  ((:r 255 :g 85 :b 125)
+   (0 3 0)
+   (-3 0 0)
+   (-1 -2 0)
+   (0 -1 0))))
+
 
 ;;; Initialize a turtle to start
 (defparameter *turtle*
@@ -113,9 +144,9 @@
 
 (defun update ()
   (sdl:blit-surface *canvas-surface*)
-  (setf *x* (round (turtle-x *turtle*)))
-  (setf *y* (round (turtle-y *turtle*)))
-  (setf *direction* (round (turtle-direction *turtle*)))
+  ;; (setf *x* (round (turtle-x *turtle*)))
+  ;; (setf *y* (round (turtle-y *turtle*)))
+  ;; (setf *direction* (round (turtle-direction *turtle*)))
   (let ((angle (* (turtle-direction *turtle*) (/ pi 180.0))))
     (let ((sin1 (sin angle))
           (cos1 (cos angle)))
@@ -139,6 +170,52 @@
 
 (defun poly-up ()
   (setf (turtle-poly-state *turtle*) nil))
+
+(defun draw-turtle ()
+  (poly-up)
+  (dolist (poly *polygons*)
+    (setf sdl:*default-color* (apply #'sdl:color (car poly)))
+    (apply #'move-to-3d (second poly))
+    (poly-down)
+    (dolist (vert (cddr poly))
+      (apply #'move-to-3d vert))
+    (poly-up))
+  (setf sdl:*default-color* (sdl:color :r 0 :g 0 :b 0 :a 40)) 
+  (move-to 0 0)
+  (poly-down)
+  (move-to 0 *height*)
+  (move-to *width* *height*)
+  (move-to *width* 0)
+  (poly-up))
+
+(defun move-to (x y)
+  (let ((dx (- x (get-x)))
+        (dy (- y (get-y))))
+    (right (- (* (atan dx dy) (/ 180 pi)) (get-direction)))
+    (forward (sqrt (+ (* dx dx) (* dy dy))))))
+
+(defun move-to-3d (x y z)
+  ; 3D transform
+  (incf z -0.5)
+  (let ((rotx 0) (roty (- (* (sin (* (sdl:sdl-get-ticks) 0.0035)) (/ pi 10)) (/ pi 6))) (rotz 0))
+    (let ((cosx (cos rotx)) (sinx (sin rotx))
+          (cosy (cos roty)) (siny (sin roty))
+          (cosz (cos rotz)) (sinz (sin rotz)))
+      (let ((d (+ (* sinz y) (* cosz x)))
+            (f (+ (* cosz y) (* sinz x))))
+        (let ((e (+ (* cosy z) (* siny d))))
+          (setf x (- (* cosy d) (* siny z)))
+          (setf y (+ (* sinx e) (* cosx f)))
+          (setf z (- (* cosx e) (* sinx f)))))))
+  (incf x -0.3)
+  (incf y (+ -0.5 (* (sin (* (sdl:sdl-get-ticks) 0.006)) 0.12)))
+  (incf z 5)
+  ; Projection
+  (let ((dx (/ (* x *width*) (* z 2.0)))
+        (dy (/ (* y *height*) (* z 2.0))))
+    ; Move turtle by dx,dy
+    (move-to (+ dx (/ *width* 2)) (+ dy (/ *height* 2)))))
+
 
 ;;; Drawing Functions
 (defun clear ()
@@ -175,9 +252,12 @@
 
 (defun triangle (x1 y1 x2 y2 x3 y3
 		 &key (surface sdl:*default-surface*) (color *stroke-color*))
-  (sdl:draw-trigon (sdl:point :x (round (+ 0 x1))  :y (round (+ 0 y1)))
-		   (sdl:point :x (round (+ 0 x2))  :y (round (+ 10 y2)))
-		   (sdl:point :x (round (+ 10 x3)) :y (round (+ 0 y3)))
+  (sdl:draw-trigon (sdl:point :x (round (+ 0 x1)) 
+			      :y (round (+ 0 y1)))
+		   (sdl:point :x (round (+ 0 x2)) 
+			      :y (round (+ 10 y2)))
+		   (sdl:point :x (round (+ 10 x3)) 
+			      :y (round (+ 0 y3)))
 		   :surface surface 
 		   :color color))
 
@@ -279,6 +359,7 @@
 	     (forward (random 20))
 	     (right (random 9))
 	     (right (random 5))
+	     (draw-turtle)
 	     (sdl:update-display)))))
 
 ;; Setup
