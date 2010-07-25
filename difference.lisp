@@ -29,7 +29,7 @@
 (defparameter *background-color* sdl:*black*)
 (defparameter *fill-color* sdl:*white*)
 (defparameter *stroke-color* sdl:*blue*)
-(defparameter *font-color* sdl:*white*)
+(defparameter *font-color* sdl:*red*)
 (defparameter *last-color* nil)
 
 ;;; Font
@@ -88,6 +88,12 @@
 (defun get-y ()
   (round (turtle-y *turtle*)))
 
+(defun get-x1 ()
+  (round (turtle-x1 *turtle*)))
+
+(defun get-y1 ()
+  (round (turtle-y1 *turtle*)))
+
 (defun get-px ()
   (round (turtle-px *turtle*)))
 
@@ -124,9 +130,9 @@
 	  (y (get-y)))
       (incf (turtle-x *turtle*) dx)
       (incf (turtle-y *turtle*) dy)
-      (when (and (turtle-poly-state *turtle*) (or (/= x (get-x1)) (/= y (get-y1))))
-	(sdl-gfx:draw-filled-trigon (sdl:point :x (get-x1)
-					       :y (get-y1))
+      (when (and (turtle-poly-state *turtle*) (or (/= x (get-px)) (/= y (get-y1))))
+	(sdl-gfx:draw-filled-trigon (sdl:point :x (get-px)
+					       :y (get-py))
 				    (sdl:point :x x
 					       :y y)
 				    (sdl:point :x (get-x)
