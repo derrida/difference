@@ -8,8 +8,8 @@
 
 ;;; Structures
 (defstruct turtle
-  (x 0) (px 0)
-  (y 0) (py 0)
+  (x  0) (y  0)
+  (px 0) (py 0)
   (direction 0)
   (pen-state t)
   (poly-state nil)
@@ -20,14 +20,9 @@
 (defparameter *height* 400)
 (defparameter *frame-rate* 30)
 
-;;; Initialize a turtle to start
-(defparameter *turtle*
-  (make-turtle :x (/ *width* 2)
-	       :y (/ *height* 2)
-	       :direction 0
-	       :pen-state nil
-	       :poly-state nil
-	       :color sdl:*black*))
+;;; Surfaces
+(defparameter *current-surface* sdl:*default-surface*)
+(defparameter *canvas-surface* nil)
 
 ;;; Colors
 (defparameter *background-color* sdl:*black*)
@@ -44,7 +39,17 @@
 ;;; Numbers
 (defparameter *random-number* (random 1000))
 
-;;; Getters
+;;; Initialize a turtle to start
+(defparameter *turtle*
+  (make-turtle :x (/ *width* 2)
+	       :y (/ *height* 2)
+	       :px 0
+	       :py 0
+	       :direction 0
+	       :pen-state nil
+	       :poly-state nil
+	       :color *stroke-color*))
+
 ;;; Getters
 (defun get-x ()
   (round (turtle-x *turtle*)))
@@ -52,11 +57,11 @@
 (defun get-y ()
   (round (turtle-y *turtle*)))
 
-(defun get-x1 ()
-  (round (turtle-x1 *turtle*)))
+(defun get-px ()
+  (round (turtle-px *turtle*)))
 
-(defun get-y1 ()
-  (round (turtle-y1 *turtle*)))
+(defun get-py ()
+  (round (turtle-py *turtle*)))
 
 (defun get-direction ()
   (round (turtle-direction *turtle*)))
@@ -70,16 +75,6 @@
 ;;; Predicates
 (defun nilp (object)
   (eq object nil))
-
-;;; Variables
-(defparameter *x* (round (get-x)))
-(defparameter *y* (round (get-y)))
-(defparameter *direction* (round (get-direction)))
-(defparameter *pen-state* (get-pen-state))
-
-;;; Surfaces
-(defparameter *current-surface* sdl:*default-surface*)
-(defparameter *canvas-surface* nil)
 
 ;;; Turtle Functions
 (defun left (&optional (degrees 1))
@@ -99,9 +94,13 @@
       (incf (turtle-x *turtle*) dx)
       (incf (turtle-y *turtle*) dy)
       (when (and (turtle-poly-state *turtle*) (or (/= x (get-x1)) (/= y (get-y1))))
-	(sdl-gfx:draw-filled-trigon (sdl:point :x (get-x1) :y (get-y1))
-				    (sdl:point :x x :y y)
-				    (sdl:point :x (get-x) :y (get-y)) :surface *canvas-surface*))
+	(sdl-gfx:draw-filled-trigon (sdl:point :x (get-x1)
+					       :y (get-y1))
+				    (sdl:point :x x
+					       :y y)
+				    (sdl:point :x (get-x)
+					       :y (get-y))
+				    :surface *canvas-surface*))
       (when *pen-state*
 	(sdl:draw-line-* x y (get-x) (get-y) :surface *canvas-surface*))))
   (update))
@@ -133,6 +132,14 @@
 (defun pen-up ()
   (setf (turtle-pen-state *turtle*) nil))
 
+(defun poly-down ()
+  (setf (turtle-px *turtle*) (turtle-x *turtle*))
+  (setf (turtle-py *turtle*) (turtle-y *turtle*))
+  (setf (turtle-poly-state *turtle*) t))
+
+(defun poly-up ()
+  (setf (turtle-poly-state *turtle*) nil))
+
 ;;; Drawing Functions
 (defun clear ()
   (sdl:clear-display *background-color*))
@@ -142,21 +149,29 @@
   `(setf *frame-rate* ,fps))
 
 ;;; Shape Primitives
-
 (defun pixel (x y
 	      &key (color *stroke-color*) (surface sdl:*default-surface*))
-  (sdl:draw-pixel-* x y :color color :surface surface))
+  (sdl:draw-pixel-* x y
+		    :color color
+		    :surface surface))
 
 (defun point (x y)
-  (sdl:point :x x :y y))
+  (sdl:point :x x
+	     :y y))
 
 (defun circle (x y r
 	       &key (surface *current-surface* ) (color *stroke-color*) (alpha nil) (aa nil))
-  (sdl:draw-circle-* x y r :surface surface :color color :alpha alpha :aa aa))
+  (sdl:draw-circle-* x y r
+		     :surface surface
+		     :color color
+		     :alpha alpha
+		     :aa aa))
 
 (defun rect (x y w h
 	     &key (surface sdl:*default-surface*) (color *stroke-color*))
-  (sdl:draw-rectangle-* x y w h :surface surface :color color))
+  (sdl:draw-rectangle-* x y w h
+			:surface surface
+			:color color))
 
 (defun triangle (x1 y1 x2 y2 x3 y3
 		 &key (surface sdl:*default-surface*) (color *stroke-color*))
@@ -215,15 +230,11 @@
   (setf *stroke-color* (sdl:color :r r :g g)))
 
 ;; Iteration
-;; requires iterate package
-	
 (defun range (&optional (start 0) (end 100))
   (loop for i from start to end collecting i))
 
-
-;; OS Integration
-(defun exec (name
-	     &rest args)
+;; OS Integration ; Runs a shell function, sbcl dependant. eg. (exec "ls" "/etc/")
+(defun exec (name &rest args)
   (sb-ext:run-program name args
 		      :output *standard-output*
 		      :search t))
@@ -249,8 +260,11 @@
   (sdl:with-init ()
     (sdl:window *width* *height* :title-caption "difference")
     (setf (sdl:frame-rate) *frame-rate*)
-    ;; Setup Block
-					; (setup)
+    (setf *canvas-surface*
+          (sdl:convert-to-display-format
+	   :surface (sdl:create-surface *width* *height*)
+	   :free t))
+    (sdl:enable-key-repeat 100 50)
     (sdl:with-events ()
       (:quit-event () t)
       (:key-down-event ()
@@ -258,19 +272,15 @@
 		       (if (sdl:key-pressed-p :SDL-KEY-UP) (forward 5))
 		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (backward 5))
 		       (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
-		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right))
+		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right)))
       (:idle ()
 	     ;; Draw Block
-	     (draw-turtle)
-	     (sdl:update-display))))))
+	     (pen-down)
+	     (forward (random 20))
+	     (right (random 9))
+	     (right (random 5))
+	     (sdl:update-display)))))
 
 ;; Setup
 (defun setup ()
-  (sdl:enable-key-repeat 100 50)
   (clear))
-
-(defun draw-turtle ()
-  (pen-down)
-  (forward 20)
-  (right (random 90))
-  (right (random 30)))
