@@ -180,7 +180,7 @@
     (dolist (vert (cddr poly))
       (apply #'move-to-3d vert))
     (poly-up))
-  (setf sdl:*default-color* (sdl:color :r 0 :g 0 :b 0 :a 40)) 
+  (setf sdl:*default-color* (sdl:color :r 0 :g 0 :b 0 :a 40))
   (move-to 0 0)
   (poly-down)
   (move-to 0 *height*)
@@ -252,39 +252,39 @@
 
 (defun triangle (x1 y1 x2 y2 x3 y3
 		 &key (surface sdl:*default-surface*) (color *stroke-color*))
-  (sdl:draw-trigon (sdl:point :x (round (+ 0 x1)) 
+  (sdl:draw-trigon (sdl:point :x (round (+ 0 x1))
 			      :y (round (+ 0 y1)))
-		   (sdl:point :x (round (+ 0 x2)) 
+		   (sdl:point :x (round (+ 0 x2))
 			      :y (round (+ 10 y2)))
-		   (sdl:point :x (round (+ 10 x3)) 
+		   (sdl:point :x (round (+ 10 x3))
 			      :y (round (+ 0 y3)))
-		   :surface surface 
+		   :surface surface
 		   :color color))
 
 (defun ellipse (x y rx ry)
-  (sdl:draw-ellipse-* x y rx ry 
-		      :surface sdl:*default-surface* 
+  (sdl:draw-ellipse-* x y rx ry
+		      :surface sdl:*default-surface*
 		      :color *stroke-color*))
 
 (defun line (x0 y0 x1 y1
 	     &key (color *stroke-color*) (surface sdl:*default-surface*) (clipping nil))
-  (sdl:draw-line-* x0 y0 x1 y1 
-		   :surface surface 
-		   :color color 
+  (sdl:draw-line-* x0 y0 x1 y1
+		   :surface surface
+		   :color color
 		   :clipping clipping))
 
 (defun bezier (vertices
 	       &key (color *stroke-color*) (segments 20) (style :solid))
-  (sdl:draw-bezier vertices 
+  (sdl:draw-bezier vertices
 		   :color color
 		   :segments segments
 		   :style style))
 
 (defun polygon (vertices
 		&key (color *stroke-color*) (surface sdl:*default-surface*) (clipping t))
-  (sdl:draw-polygon vertices 
-		    :surface surface 
-		    :color color 
+  (sdl:draw-polygon vertices
+		    :surface surface
+		    :color color
 		    :clipping clipping))
 
 
