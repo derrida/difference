@@ -135,9 +135,6 @@
 
 (defun update ()
   (sdl:blit-surface *canvas-surface*)
-  ;; (setf *x* (round (turtle-x *turtle*)))
-  ;; (setf *y* (round (turtle-y *turtle*)))
-  ;; (setf *direction* (round (turtle-direction *turtle*)))
   (setf (turtle-px *turtle*) (turtle-x *turtle*))
   (setf (turtle-py *turtle*) (turtle-y *turtle*))
   (let ((angle (* (turtle-direction *turtle*) (/ pi 180.0))))
@@ -154,6 +151,11 @@
 
 (defun pen-up ()
   (setf (turtle-pen-state *turtle*) nil))
+
+(defun toggle-pen ()
+  (if (turtle-pen-state *turtle*)
+      (setf (turtle-pen-state *turtle*) nil)
+      (setf (turtle-pen-state *turtle*) t)))
 
 (defun poly-down ()
   (setf (turtle-poly-state *turtle*) t))
@@ -237,8 +239,8 @@
   (sdl:clear-display *background-color*))
 
 ;;; Setters
-(defmacro frame-rate (fps)
-  `(setf *frame-rate* ,fps))
+(defun frame-rate (fps)
+  (setf *frame-rate* fps))
 
 ;;; Shape Primitives
 (defun pixel (x y
@@ -344,6 +346,35 @@
 	((eql line 'eof))
       (format t "~A~%" line))))
 
+;;; Main
+(defmethod main ()
+  (sdl:with-init ()
+    ;; Setup Block
+    (sdl:window *width*
+		*height* :title-caption "difference")
+    (sdl:frame-rate *frame-rate*)
+    (setf *canvas-surface* (sdl:convert-to-display-format :surface (sdl:create-surface *width* *height*) :free t))
+    (sdl:enable-key-repeat 100 50)
+    (sdl:clear-display *background-color*)
+    ;; End Setup Block
+    (sdl:with-events ()
+      (:quit-event () t)
+      (:key-down-event (:key key)
+		       (case  key
+			 (:SDL-KEY-ESCAPE (sdl:push-quit-event))
+			 (:SDL-KEY-UP (forward 5))
+			 (:SDL-KEY-DOWN (backward 5))
+			 (:SDL-KEY-LEFT (left 10))
+			 (:SDL-KEY-RIGHT (right 10))
+			 (:SDL-KEY-SPACE (toggle-pen)))
+		       (:idle ()
+			      ;; Draw Block (Game Loop?)
+
+
+
+
+			      ;; End Draw Block
+			      (sdl:update-display))))))
 ;;; Main
 (defmethod main ()
   (sdl:with-init ()
