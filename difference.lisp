@@ -8,13 +8,16 @@
 
 ;;; Structures
 (defstruct turtle
-  (x  0) (y  0)
-  (px 0) (py 0)
-  (x1 0) (y1 0)
+  (x  0)
+  (y  0)
+  (px 0)
+  (py 0)
+  (x1 0)
+  (y1 0)
   (direction 0)
   (pen-state nil)
   (poly-state nil)
-  (color sdl:*black*))
+  (color sdl:*magenta*))
 
 ;;; Environment
 (defparameter *width* 400)
@@ -26,11 +29,21 @@
 (defparameter *canvas-surface* nil)
 
 ;;; Colors
-(defparameter *background-color* sdl:*black*)
+(defparameter *background-color* sdl:*white*)
 (defparameter *fill-color* sdl:*white*)
 (defparameter *stroke-color* sdl:*blue*)
 (defparameter *font-color* sdl:*red*)
 (defparameter *last-color* nil)
+
+;;; Initialize a turtle to start
+(defparameter *turtle* (make-turtle :x (/ *width* 2)
+	       :y (/ *height* 2)
+	       :px 0
+	       :py 0
+	       :direction 0
+	       :pen-state nil
+	       :poly-state nil
+	       :color *stroke-color*))
 
 ;;; Font
 (defparameter *last-font* nil)
@@ -42,44 +55,16 @@
 
 ;;; Polygons
 ; Draw list of 3D convex polygons
-(defparameter *polygons* '(
-  ((:r 78 :g 114 :b 114)
-   (0 -1 0)
-   (0 -1 1)
-   (-1 -2 1)
-   (-1 -2 0))
-  ((:r 78 :g 114 :b 114)
-   (3 0 0)
-   (3 0 1)
-   (1 -2 1)
-   (1 -2 0))
-  ((:r 78 :g 114 :b 114)
-   (0 3 0)
-   (0 3 1)
-   (3 0 1)
-   (3 0 0))
-  ((:r 255 :g 85 :b 125)
-   (0 3 0)
-   (0 -1 0)
-   (1 -2 0)
-   (3 0 0))
-  ((:r 255 :g 85 :b 125)
-   (0 3 0)
-   (-3 0 0)
-   (-1 -2 0)
-   (0 -1 0))))
+;(defparameter *tan* ( :r 78 :g 114 :b 114))
+;; (defparameter *mauve* (list :r 255 :g 85 :b 125))
 
-
-;;; Initialize a turtle to start
-(defparameter *turtle*
-  (make-turtle :x (/ *width* 2)
-	       :y (/ *height* 2)
-	       :px 0
-	       :py 0
-	       :direction 0
-	       :pen-state nil
-	       :poly-state nil
-	       :color *stroke-color*))
+(defparameter -m3 -3)
+(defparameter -m2 -2)
+(defparameter -m1 -1)
+(defparameter m0  0)
+(defparameter m1  1)
+(defparameter m2  2)
+(defparameter m3  3)
 
 ;;; Getters
 (defun get-x ()
@@ -115,11 +100,11 @@
 
 ;;; Turtle Functions
 (defun left (&optional (degrees 1))
-  (mod (decf (turtle-direction *turtle*) degrees) 360)
+  (mod (incf (turtle-direction *turtle*) degrees) 360)
   (update))
 
 (defun right (&optional (degrees 1))
-  (mod (incf (turtle-direction *turtle*) degrees) 360)
+  (mod (decf (turtle-direction *turtle*) degrees) 360)
   (update))
 
 (defun forward (steps)
@@ -138,8 +123,8 @@
 				    (sdl:point :x (get-x)
 					       :y (get-y))
 				    :surface *canvas-surface*))
-      (when *pen-state*
-	(sdl:draw-line-* x y (get-x) (get-y) :surface *canvas-surface*))))
+      (and (turtle-pen-state *turtle*)
+	   (sdl:draw-line-* x y (get-x) (get-y) :surface *canvas-surface*))))
   (update))
 
 (defun backward (steps)
@@ -153,6 +138,8 @@
   ;; (setf *x* (round (turtle-x *turtle*)))
   ;; (setf *y* (round (turtle-y *turtle*)))
   ;; (setf *direction* (round (turtle-direction *turtle*)))
+  (setf (turtle-px *turtle*) (turtle-x *turtle*))
+  (setf (turtle-py *turtle*) (turtle-y *turtle*))
   (let ((angle (* (turtle-direction *turtle*) (/ pi 180.0))))
     (let ((sin1 (sin angle))
           (cos1 (cos angle)))
@@ -160,8 +147,7 @@
                        (sdl:point :x (+ (get-x) (* 5 cos1) (* -5 sin1))
                                   :y (+ (get-y) (* -5 sin1) (* -5 cos1)))
                        (sdl:point :x (+ (get-x) (* -5 cos1) (* -5 sin1))
-                                  :y (+ (get-y) (* 5 sin1) (* -5 cos1))))))
-  *turtle*)
+                                  :y (+ (get-y) (* 5 sin1) (* -5 cos1)))))))
 
 (defun pen-down ()
   (setf (turtle-pen-state *turtle*) t))
@@ -170,12 +156,36 @@
   (setf (turtle-pen-state *turtle*) nil))
 
 (defun poly-down ()
-  (setf (turtle-px *turtle*) (turtle-x *turtle*))
-  (setf (turtle-py *turtle*) (turtle-y *turtle*))
   (setf (turtle-poly-state *turtle*) t))
 
 (defun poly-up ()
   (setf (turtle-poly-state *turtle*) nil))
+
+(defparameter *polygons* '(((:r 78 :g 114 :b 114)
+ 			    (0   -1  0)
+ 			    (0   -1  1)
+			    (-1  -2  1)
+ 			    (-1  -2  0))
+ 			   ((:r 255 :g 85 :b 125)
+			    (3   0  0)
+ 			    (3   0  1)
+			    (1  -2  1)
+ 			    (1  -2  0))
+ 			   ((:r 78 :g 114 :b 114)
+ 			    (0   3  0)
+ 			    (0   3  1)
+			    (3   0  1)
+			    (3   0  0))
+			   ((:r 78 :g 114 :b 114)
+			    (0   3  0)
+			    (0  -1  0)
+ 			    (1  -2  0)
+			    (-3  0  0))
+			   ((:r 255 :g 85 :b 125)
+ 			    (0   3  0)
+ 			    (-3  0  0)
+			    (-1 -2  0)
+ 			    (0  -1  0))))
 
 (defun draw-turtle ()
   (poly-up)
@@ -186,7 +196,7 @@
     (dolist (vert (cddr poly))
       (apply #'move-to-3d vert))
     (poly-up))
-  (setf sdl:*default-color* (sdl:color :r 0 :g 0 :b 0 :a 40))
+  ;  (setf sdl:*default-color* (sdl:color :r 0 :g 0 :b 0 :a 40))
   (move-to 0 0)
   (poly-down)
   (move-to 0 *height*)
@@ -196,12 +206,12 @@
 
 (defun move-to (x y)
   (let ((dx (- x (get-x)))
-        (dy (- y (get-y))))
+	(dy (- y (get-y))))
     (right (- (* (atan dx dy) (/ 180 pi)) (get-direction)))
     (forward (sqrt (+ (* dx dx) (* dy dy))))))
 
 (defun move-to-3d (x y z)
-  ; 3D transform
+  ;; 3D transform
   (incf z -0.5)
   (let ((rotx 0) (roty (- (* (sin (* (sdl:sdl-get-ticks) 0.0035)) (/ pi 10)) (/ pi 6))) (rotz 0))
     (let ((cosx (cos rotx)) (sinx (sin rotx))
@@ -216,12 +226,11 @@
   (incf x -0.3)
   (incf y (+ -0.5 (* (sin (* (sdl:sdl-get-ticks) 0.006)) 0.12)))
   (incf z 5)
-  ; Projection
+  ;; Projection
   (let ((dx (/ (* x *width*) (* z 2.0)))
         (dy (/ (* y *height*) (* z 2.0))))
-    ; Move turtle by dx,dy
+    ;; Move turtle by dx,dy
     (move-to (+ dx (/ *width* 2)) (+ dy (/ *height* 2)))))
-
 
 ;;; Drawing Functions
 (defun clear ()
@@ -313,7 +322,9 @@
 
 ;;; Color
 (defun stroke (&key (r 0) (g 0) (b 0))
-  (setf *stroke-color* (sdl:color :r r :g g)))
+  (setf *stroke-color* (sdl:color :r r
+				  :g g
+				  :b b)))
 
 ;; Iteration
 (defun range (&optional (start 0) (end 100))
@@ -333,41 +344,43 @@
 	((eql line 'eof))
       (format t "~A~%" line))))
 
-;; Common Inputs
-(defun ask (question expected-type)
-  (format t "~A " question)
-  (let ((response (read)))
-    (if (typep response expected-type)
-	response
-	(ask (format t "~A " question) expected-type))))
-
 ;;; Main
 (defmethod main ()
   (sdl:with-init ()
+    ;; Setup Block
     (sdl:window *width* *height* :title-caption "difference")
     (setf (sdl:frame-rate) *frame-rate*)
-    (setf *canvas-surface*
-          (sdl:convert-to-display-format
-	   :surface (sdl:create-surface *width* *height*)
-	   :free t))
+    (setf *canvas-surface* (sdl:convert-to-display-format :surface (sdl:create-surface *width* *height*)
+						      :free t))
     (sdl:enable-key-repeat 100 50)
+    (sdl:clear-display *background-color*)
+    ;; End Setup Block
     (sdl:with-events ()
       (:quit-event () t)
-      (:key-down-event ()
-		       (if (sdl:key-pressed-p :SDL-KEY-ESCAPE) (sdl:push-quit-event))
-		       (if (sdl:key-pressed-p :SDL-KEY-UP) (forward 5))
-		       (if (sdl:key-pressed-p :SDL-KEY-DOWN) (backward 5))
-		       (if (sdl:key-pressed-p :SDL-KEY-LEFT) (left))
-		       (if (sdl:key-pressed-p :SDL-KEY-RIGHT) (right)))
+      (:key-down-event (:key key)
+		       (case  key
+			 (:SDL-KEY-ESCAPE (sdl:push-quit-event))
+			 (:SDL-KEY-UP (forward 5))
+			 (:SDL-KEY-DOWN (backward 5))
+			 (:SDL-KEY-LEFT (left 10))
+			 (:SDL-KEY-RIGHT (right 10))))
       (:idle ()
-	     ;; Draw Block
-	     (pen-down)
-	     (forward (random 20))
-	     (right (random 9))
-	     (right (random 5))
-	     (draw-turtle)
+	     ;; Draw Block (Game Loop?)
+
+
+
+
+	     ;; End Draw Block
 	     (sdl:update-display)))))
 
-;; Setup
-(defun setup ()
-  (clear))
+
+
+
+
+
+
+;		 (pen-down)
+;	     (draw-turtle)
+;	     (sdl:update-display)
+;	     (forward (random 100))
+;	     (right (random 30 50))
