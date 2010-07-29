@@ -6,14 +6,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package #:difference)
 
-;; (defclass environment ()
-;;   (width            :accessor x            :initarg :x         :reader check :initform (/ *width*  2))
-;;   (height           :accessor y            :initarg :y         :reader check :initform (/ *height* 2))
-;;   (frame-rate       :accessor px           :initarg :px        :reader check :initform      nil      )
-;;   (dashboard        :accessor py           :initarg :py        :reader check :initform      nil      )
-;;   (background-color :accessor direction    :initarg :direction :reader check :initform (/ *width*  2))
-;;   (anti-aliasing    :accessor pen-state    :initarg :pen-state :reader check :initform (/ *height* 2)))
-
 ;;; Predicates
 (defun nilp (object)
   (eq object nil))

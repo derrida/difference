@@ -1,4 +1,11 @@
 (in-package :difference)
+;;(defclass environment ()
+;; (width         :accessor x            :initarg :x         :reader check :initform (/ *width*  2))
+;; (height        :accessor y            :initarg :y         :reader check :initform (/ *height* 2))
+;; (frame-rate    :accessor px           :initarg :px        :reader check :initform      nil      )
+;; (dashboard     :accessor py           :initarg :py        :reader check :initform      nil      )
+;; (background-color :accessor direction    :initarg :direction :reader check :initform (/ *width*  2))
+;; (anti-aliasing :accessor pen-state    :initarg :pen-state :reader check :initform (/ *height* 2)))
 
 ;;; Environment
 (defparameter *width* 800)
@@ -6,6 +13,7 @@
 (defparameter *frame-rate* 60)
 (defparameter *show-turtle* t)
 (defparameter *dashboard* t)
+(defparameter *rainbow* nil)
 
 ;;; Surface Parameters
 (defparameter *current-surface* sdl:*default-surface*)

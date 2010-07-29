@@ -11,13 +11,13 @@
 
 ;;; Initialize a turtle to start
 (defparameter *turtle* (make-instance 'turtle
-			:x (/ *width* 2)
-			:y (/ *height* 2)
-			:px 0
-			:py 0
-			:direction 0
-			:pen-state nil
-			:color *stroke-color*))
+				      :x (/ *width* 2)
+				      :y (/ *height* 2)
+				      :px 0
+				      :py 0
+				      :direction 0
+				      :pen-state nil
+				      :color *stroke-color*))
 
 ;;; Turtle Functions
 (defmacro to (name args &body body)
@@ -35,10 +35,16 @@
 
 (defun forward (steps)
   (let* ((angle (* (turtle-direction *turtle*) (/ pi 180.0)))
-	 (dx (* (sin angle) steps))
-	 (dy (* (cos angle) steps)))
-    (incf (turtle-x *turtle*) dx)
-    (incf (turtle-y *turtle*) dy)
+	 (s (* (sin angle) steps))
+	 (c (* (cos angle) steps)))
+    (setf (turtle-px *turtle*) (round (turtle-x *turtle*)))
+    (setf (turtle-py *turtle*) (round (turtle-y *turtle*)))
+    (incf (turtle-x *turtle*) (round s))
+    (incf (turtle-y *turtle*) (round c))
+    (when (pen-state *turtle*)
+      (sdl:draw-line-* (round (turtle-px *turtle*)) (round (turtle-py *turtle*)) (round (turtle-x *turtle*)) (round (turtle-y *turtle*)) :color *stroke-color* :surface *canvas-surface*))
+    (when *rainbow*
+      (random-stroke!))
     (update)))
 
 (defun backward (steps)
@@ -48,25 +54,18 @@
 
 (defun update ()
   (sdl:blit-surface *canvas-surface*)
-  (setf (turtle-px *turtle*) (turtle-x *turtle*))
-  (setf (turtle-py *turtle*) (turtle-y *turtle*))
-  (draw-turtle))
-
-(defun draw-turtle ()
   (let* ((angle (* (turtle-direction *turtle*) (/ pi 180.0)))
-	 (s (sin angle))
-	 (c (cos angle)))
-    (when (eq *show-turtle* t)
-      (render-turtle s c (+ 5 (turtle-x *turtle*)) (turtle-y *turtle*)))
-    (when (pen-state *turtle*)
-      (line (turtle-px *turtle*) (turtle-px *turtle*) (turtle-x *turtle*) (turtle-y *turtle*)))))
-
-(defun render-turtle (s c x y)
+	 (s     (sin angle))
+	 (c     (cos angle))
+	 (x     (turtle-x *turtle*))
+	 (y     (turtle-y *turtle*)))
+    (when *show-turtle*
       (sdl:draw-trigon (sdl:point :x x :y y)
-                       (sdl:point :x (+ x (*  5 c) (* -5 s))
+		       (sdl:point :x (+ x (*  5 c) (* -5 s))
 				  :y (+ y (* -5 s) (* -5 c)))
 		       (sdl:point :x (+ x (* -5 c) (* -5 s))
-				  :y (+ y (*  5 s) (* -5 c)))))
+				  :y (+ y (*  5 s) (* -5 c)))))))
+
 
 (defun pen-down ()
   (setf (pen-state *turtle*) t))
@@ -74,25 +73,21 @@
 (defun pen-up ()
   (setf (pen-state *turtle*) nil))
 
+(defun pen ()
+  (setf (pen-state *turtle*) (not (pen-state *turtle*))))
+
 (defun turtle-home ()
   (setf (turtle-x *turtle*) (/ *width* 2))
   (setf (turtle-y *turtle*) (/ *height* 2)))
 
-(defun toggle-pen ()
-  (if (pen-state *turtle*)
-      (setf (pen-state *turtle*) nil)
-      (setf (pen-state *turtle*) t)))
-
-(defun toggle-dashboard ()
-  (if (eq *dashboard* t)
-      (setf *dashboard* nil)
-      (setf *dashboard* t)))
+(defun dashboard ()
+  (setf *dashboard* (not *dashboard*)))
 
 (defun draw-dashboard ()
   (text 10 10 "x:~A"             (round (turtle-x *turtle*)))
   (text 10 20 "y:~A"             (round (turtle-y *turtle*)))
   (text 10 30 "heading:~A"       (round (turtle-direction *turtle*)))
-  (text 10 40 "pen-state: ~A"    (princ (pen-state *turtle*)))
+  (text 10 40 "pen-state: ~A"    (pen-state *turtle*))
   (text 10 50 "stroke-color: ~A" (stroke?)))
 
 (defun move-to (x y)
