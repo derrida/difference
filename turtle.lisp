@@ -21,7 +21,6 @@
 
 ;;; Turtle Functions
 (defmacro to (name args &body body)
-  "Synonym for defun"
   `(defun ,name ,args
      ,@body))
 
@@ -39,8 +38,14 @@
 	 (c (* (cos angle) steps)))
     (setf (turtle-px *turtle*) (round (turtle-x *turtle*)))
     (setf (turtle-py *turtle*) (round (turtle-y *turtle*)))
-    (incf (turtle-x *turtle*) (round s))
-    (incf (turtle-y *turtle*) (round c))
+    (setf (turtle-x *turtle*) (and (> (turtle-x *turtle*) 0)
+				(if (<= (+ (turtle-x *turtle*) (round s)) *width*)
+				    (setf (turtle-x *turtle*) (+ (turtle-x *turtle*) (round s)))
+				    (setf (turtle-x *turtle*) *width*))))
+    (setf (turtle-y *turtle*) (and (> (turtle-y *turtle*) 0)
+				(if (<= (+ (turtle-y *turtle*) (round c)) *height*)		      
+				    (setf (turtle-y *turtle*) (+ (turtle-y *turtle*) (round c)))
+				    (setf (turtle-y *turtle*) *height*))))
     (when (pen-state *turtle*)
       (sdl:draw-line-* (round (turtle-px *turtle*)) (round (turtle-py *turtle*)) (round (turtle-x *turtle*)) (round (turtle-y *turtle*)) :color *stroke-color* :surface *canvas-surface*))
     (when *rainbow*
@@ -64,7 +69,9 @@
 		       (sdl:point :x (+ x (*  5 c) (* -5 s))
 				  :y (+ y (* -5 s) (* -5 c)))
 		       (sdl:point :x (+ x (* -5 c) (* -5 s))
-				  :y (+ y (*  5 s) (* -5 c)))))))
+				  :y (+ y (*  5 s) (* -5 c)))
+		       :color *stroke-color*
+		       :surface *current-surface*))))
 
 
 (defun pen-down ()
@@ -89,6 +96,9 @@
   (text 10 30 "heading:~A"       (round (turtle-direction *turtle*)))
   (text 10 40 "pen-state: ~A"    (pen-state *turtle*))
   (text 10 50 "stroke-color: ~A" (stroke?)))
+
+(defun clear-canvas ()
+  (sdl:clear-display *background-color* :surface *canvas-surface*))
 
 (defun move-to (x y)
   (let ((dx (- x (turtle-x *turtle*)))

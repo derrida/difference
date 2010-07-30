@@ -26,12 +26,12 @@
 			 (:SDL-KEY-DOWN (backward 10))
 			 (:SDL-KEY-LEFT (left 5))
 			 (:SDL-KEY-RIGHT (right 5))
+			 (:SDL-KEY-C (clear-canvas))
 			 (:SDL-KEY-D (dashboard))
 			 (:SDL-KEY-R (random-stroke!))
 			 (:SDL-KEY-H (turtle-home))
 			 (:SDL-KEY-SPACE (pen))))
       (:idle ()
-					;	     (sdl:update-display)
 	     ;;
 	     ;; Draw Block (Game Loop?)
 	     ;;		
