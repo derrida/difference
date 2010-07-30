@@ -16,7 +16,8 @@
 (defun random-stroke! ()
   (setf *stroke-color* (sdl:color :r (random 255)
 				  :b (random 255)
-				  :g (random 255))))
+				  :g (random 255)))
+  (update))
 
 (defun fill! (r g b a)
   (setf *fill-color* (sdl:color :r r
