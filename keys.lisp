@@ -21,6 +21,6 @@
     (:SDL-KEY-KP4 (setf (turtle-direction *turtle*) 270) (forward 5))
     (:SDL-KEY-KP6 (setf (turtle-direction *turtle*) 90) (forward 5))
     (:SDL-KEY-KP1 (setf (turtle-direction *turtle*) 315) (forward 5))
-    (:SDL-KEY-KP2 (setf (turtle-direction *turtle*) 0) (forward 5))
+    (:SDL-KEY-KP5 (setf (turtle-direction *turtle*) 0) (forward 5))
     (:SDL-KEY-KP3 (setf (turtle-direction *turtle*) 45) (forward 5))
     (:SDL-KEY-KP-ENTER (random-stroke!))))

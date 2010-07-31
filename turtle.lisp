@@ -41,8 +41,6 @@
 
 (declaim (inline bound))
 (defun bound (number min max)
-  "Clamps the NUMBER into [min, max] range. Returns MIN if NUMBER is lesser then
-MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER."
   (if (< number min)
       min
       (if (> number max)
@@ -90,18 +88,6 @@ MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER."
   (setf (turtle-y *turtle*) (/ *height* 2))
   (make-dirty))
 
-(defun dashboard ()
-  (setf *dashboard* (not *dashboard*))
-  (make-dirty))
-
-(defun draw-dashboard ()
-  (text 10 10 "x:~A" (turtle-x *turtle*))
-  (text 10 20 "y:~A" (turtle-y *turtle*))
-  (text 10 30 "heading:~A" (turtle-direction *turtle*))
-  (text 10 40 "pen-state: ~A" (pen-state *turtle*))
-  (text 10 50 "stroke-color: ~A" (stroke?))
-  (make-dirty))
-
 (defun clear-canvas ()
   (sdl:clear-display *background-color* :surface *canvas-surface*)
   (make-dirty))
@@ -112,4 +98,17 @@ MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER."
 	(dy (- y (turtle-y *turtle*))))
     (right (- (* (atan dx dy) (/ 180 pi)) (turtle-direction *turtle*)))
     (forward (sqrt (+ (* dx dx) (* dy dy)))))
+  (make-dirty))
+
+
+(defun dashboard ()
+  (setf *dashboard* (not *dashboard*))
+  (make-dirty))
+
+(defun draw-dashboard ()
+  (text 10 10 "x:~A" (turtle-x *turtle*))
+  (text 10 20 "y:~A" (turtle-y *turtle*))
+  (text 10 30 "heading:~A" (turtle-direction *turtle*))
+  (text 10 40 "pen-state: ~A" (pen-state *turtle*))
+  (text 10 50 "stroke-color: ~A" (stroke?))
   (make-dirty))
