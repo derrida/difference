@@ -11,19 +11,21 @@
   (setf *stroke-color* (sdl:color :r r
 				  :g g
 				  :b b
-				  :a a)))
+				  :a a))
+  (make-dirty))
 
 (defun random-stroke! ()
   (setf *stroke-color* (sdl:color :r (random 255)
 				  :b (random 255)
 				  :g (random 255)))
-  (update))
+  (make-dirty))
 
 (defun fill! (r g b a)
   (setf *fill-color* (sdl:color :r r
 				:g g
 				:b b
-				:a a)))
+				:a a))
+  (make-dirty))
 
 (defun stroke? (&optional isolate)
   (multiple-value-bind (r g b a)

@@ -9,7 +9,9 @@
     (sdl:window *width* *height* :title-caption "difference" :resizable t)
     (frame-rate *frame-rate*)
     (setf *canvas-surface* (sdl:convert-to-display-format :surface (sdl:create-surface *width* *height*) :free t))
-    (sdl:enable-key-repeat 10 10)
+    (setf *keystack* '())
+;    (sdl:enable-key-repeat 10 10)
+    
     (sdl:clear-display *background-color*)
     (when (eq *unicode* t)
       (sdl:enable-unicode))
@@ -17,25 +19,25 @@
     ;;
     ;; End Setup Block
     ;;
+    
     (sdl:with-events ()
       (:quit-event () t)
       (:active-event () )
-      (:resize-event (:W w :H h) )
+      (:resize-event (:W w :H h)
+		     (setf *width* w)
+		     (setf *height* h)
+		     (sdl:window *width* *height* :title-caption "difference" :resizable t))
       (:key-down-event (:KEY key)
-		       (case  key
-			 (:SDL-KEY-ESCAPE (sdl:push-quit-event))
-			 (:SDL-KEY-UP (forward 2))
-			 (:SDL-KEY-DOWN (backward 2))
-			 (:SDL-KEY-LEFT (left 2))
-			 (:SDL-KEY-RIGHT (right 2))
-			 (:SDL-KEY-C (clear-canvas))
-			 (:SDL-KEY-D (dashboard))
-			 (:SDL-KEY-R (random-stroke!))
-			 (:SDL-KEY-H (turtle-home))
-			 (:SDL-KEY-SPACE (pen))
-			 (:SDL-KEY-S (sdl:save-image *canvas-surface* `(scrn ,(gensym))))))
+		       (push key *keystack*)
+		       (mapcar #'process-non-repeating-key *keystack*))
+      (:key-up-event (:KEY key)
+		     (setf *keystack* (delete key *keystack*)))
       (:idle ()
-	     ;; Game
+	     (when *keystack*
+	       (mapcar #'process-repeating-key *keystack*))
+	     (when *dirty*
+	       (sdl:blit-surface *canvas-surface*)
+	       (render-turtle))
 	     (when *dashboard*
 	       (draw-dashboard))
 	     (sdl:update-display)))))

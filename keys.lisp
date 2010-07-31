@@ -1,0 +1,26 @@
+(in-package :difference)
+
+(defun process-non-repeating-key(key)
+  (case key
+    (:SDL-KEY-ESCAPE (sdl:push-quit-event))
+    (:SDL-KEY-P (pen))
+    (:SDL-KEY-SPACE (pen))
+    (:SDL-KEY-H (turtle-home))
+    (:SDL-KEY-R (random-stroke!))
+    (:SDL-KEY-B (print "fuck"))))
+
+(defun process-repeating-key (key)
+  (case  key
+    (:SDL-KEY-UP (forward 5))
+    (:SDL-KEY-DOWN (backward 5))
+    (:SDL-KEY-LEFT (left 5))
+    (:SDL-KEY-RIGHT (right 5))
+    (:SDL-KEY-KP7 (setf (turtle-direction *turtle*) 225) (forward 5))
+    (:SDL-KEY-KP8 (setf (turtle-direction *turtle*) 180) (forward 5))
+    (:SDL-KEY-KP9 (setf (turtle-direction *turtle*) 135) (forward 5))
+    (:SDL-KEY-KP4 (setf (turtle-direction *turtle*) 270) (forward 5))
+    (:SDL-KEY-KP6 (setf (turtle-direction *turtle*) 90) (forward 5))
+    (:SDL-KEY-KP1 (setf (turtle-direction *turtle*) 315) (forward 5))
+    (:SDL-KEY-KP2 (setf (turtle-direction *turtle*) 0) (forward 5))
+    (:SDL-KEY-KP3 (setf (turtle-direction *turtle*) 45) (forward 5))
+    (:SDL-KEY-KP-ENTER (random-stroke!))))

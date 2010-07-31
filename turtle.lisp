@@ -1,36 +1,18 @@
 (in-package :difference)
 
-(defclass turtle ()
-  ((x-coordinate  :accessor turtle-x         :initarg :x         :reader check :initform (/ *width*  2))
-   (y-coordinate  :accessor turtle-y         :initarg :y         :reader check :initform (/ *height* 2))
-   (px-coordinate :accessor turtle-px        :initarg :px        :reader check :initform      nil      )
-   (py-coordinate :accessor turtle-py        :initarg :py        :reader check :initform      nil      )
-   (direction     :accessor turtle-direction :initarg :direction :reader check :initform (/ *width*  2))
-   (pen-state     :accessor pen-state        :initarg :pen-state :reader check :initform (/ *height* 2))
-   (color         :accessor turtle-color     :initarg :color     :reader check :initform *stroke-color*)))
-
-;;; Initialize a turtle to start
-(defparameter *turtle* (make-instance 'turtle
-				      :x (/ *width* 2)
-				      :y (/ *height* 2)
-				      :px 0
-				      :py 0
-				      :direction 0
-				      :pen-state nil
-				      :color *stroke-color*))
-
 ;;; Turtle Functions
-(defmacro to (name args &body body)
+(defmacro to (name args
+	      &body body)
   `(defun ,name ,args
      ,@body))
 
 (defun left (&optional (degrees 1))
-  (setf (turtle-direction *turtle*) (round (mod (+ (turtle-direction *turtle*) degrees) 360)))
-  (update))
+  (setf (turtle-direction *turtle*) (mod (+ (turtle-direction *turtle*) degrees) 360))
+  (make-dirty))
 
 (defun right (&optional (degrees 1))
-  (setf (turtle-direction *turtle*) (round (mod (- (turtle-direction *turtle*) degrees) 360)))
-  (update))
+  (setf (turtle-direction *turtle*) (mod (- (turtle-direction *turtle*) degrees) 360))
+  (make-dirty))
 
 (defun forward (steps)
   (let* ((px (turtle-x *turtle*))
@@ -42,82 +24,92 @@
 	 (y (+ (turtle-y *turtle*) c)))
     (setf (turtle-px *turtle*) px)
     (setf (turtle-py *turtle*) py)
-    (setf (turtle-x  *turtle*) (bound x :min 0 :max *width*))    
-    (setf (turtle-y  *turtle*) (bound y :min 0 :max *height*)))
+    (setf (turtle-x  *turtle*) (bound x 0 *width*))    
+    (setf (turtle-y  *turtle*) (bound y 0 *height*)))
   (when (pen-state *turtle*)
     (let ((px (turtle-px *turtle*))
 	  (py (turtle-py *turtle*))
 	  (x (turtle-x *turtle*))
 	  (y (turtle-y *turtle*)))
-      (let ((p0 (sdl:point :x px
-			   :y py))
-	    (p1 (sdl:point :x x
-			   :y y)))
+      (let ((p0 (sdl:point :x px :y py))
+	    (p1 (sdl:point :x  x :y  y)))
 	(sdl:draw-line p0 p1 :color *stroke-color* :surface *canvas-surface*))))
   (when *rainbow*
     (random-stroke!))
-  (update))
+  (when (not *dirty*)
+    (make-dirty)))
 
-(defun bound (num &key min max)
-  (cond 
-    ((< num min) min)
-    ((< max num) max)
-    ((< num max) num)))
+(declaim (inline bound))
+(defun bound (number min max)
+  "Clamps the NUMBER into [min, max] range. Returns MIN if NUMBER is lesser then
+MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER."
+  (if (< number min)
+      min
+      (if (> number max)
+          max
+          number)))
 
 (defun backward (steps)
   (let ((backward-steps (- 0 steps)))
-    (forward backward-steps))
-  (update))
+    (forward backward-steps)))
 
-(defun update ()
-  (sdl:blit-surface *canvas-surface*)
+(defun render-turtle ()
   (let* ((angle (* (turtle-direction *turtle*) (/ pi 180.0)))
-	 (s     (sin angle))
-	 (c     (cos angle))
-	 (x     (round (turtle-x *turtle*)))
-	 (y     (round (turtle-y *turtle*))))
+	 (s (sin angle))
+	 (c (cos angle)))
     (when *show-turtle*
-      (sdl:draw-trigon (sdl:point :x x
-				  :y y)
-		       (sdl:point :x (round (+ x (*  5 c) (* -5 s)))
-				  :y (round (+ y (* -5 s) (* -5 c))))
-		       (sdl:point :x (round (+ x (* -5 c) (* -5 s)))
-				  :y (round (+ y (*  5 s) (* -5 c))))
+      (sdl:draw-trigon (sdl:point :x (turtle-x *turtle*)
+				  :y (turtle-y *turtle*))
+		       (sdl:point :x (+ (turtle-x *turtle*) (*  5 c) (* -5 s))
+				  :y (+ (turtle-y *turtle*) (* -5 s) (* -5 c)))
+		       (sdl:point :x (+ (turtle-x *turtle*) (* -5 c) (* -5 s))
+				  :y (+ (turtle-y *turtle*) (*  5 s) (* -5 c)))
 		       :color *stroke-color*
 		       :surface *current-surface*))))
 
+(defun make-dirty ()
+  (setf *dirty* t))
+
+(defun make-clean ()
+  (setf *dirty* nil))
+
 (defun pen ()
   (setf (pen-state *turtle*) (not (pen-state *turtle*)))
-  (update))
+  (make-dirty))
 
 (defun pen-down ()
-  (setf (pen-state *turtle*) t))
+  (setf (pen-state *turtle*) t)
+  (make-dirty))
 
 (defun pen-up ()
-  (setf (pen-state *turtle*) nil))
+  (setf (pen-state *turtle*) nil)
+  (make-dirty))
 
 (defun turtle-home ()
   (setf (turtle-x *turtle*) (/ *width* 2))
   (setf (turtle-y *turtle*) (/ *height* 2))
-  (update))
+  (make-dirty))
 
 (defun dashboard ()
   (setf *dashboard* (not *dashboard*))
-  (update))
+  (make-dirty))
 
 (defun draw-dashboard ()
-  (text 10 10 "x:~A" (round (turtle-x *turtle*)))
-  (text 10 20 "y:~A" (round (turtle-y *turtle*)))
-  (text 10 30 "heading:~A" (round (turtle-direction *turtle*)))
+  (text 10 10 "x:~A" (turtle-x *turtle*))
+  (text 10 20 "y:~A" (turtle-y *turtle*))
+  (text 10 30 "heading:~A" (turtle-direction *turtle*))
   (text 10 40 "pen-state: ~A" (pen-state *turtle*))
-  (text 10 50 "stroke-color: ~A" (stroke?)))
+  (text 10 50 "stroke-color: ~A" (stroke?))
+  (make-dirty))
 
 (defun clear-canvas ()
-  (sdl:clear-display *background-color* :surface *canvas-surface*))
+  (sdl:clear-display *background-color* :surface *canvas-surface*)
+  (make-dirty))
 
 ;;; Cartesian Turtle
 (defun move-to (x y)
   (let ((dx (- x (turtle-x *turtle*)))
 	(dy (- y (turtle-y *turtle*))))
     (right (- (* (atan dx dy) (/ 180 pi)) (turtle-direction *turtle*)))
-    (forward (sqrt (+ (* dx dx) (* dy dy))))))
+    (forward (sqrt (+ (* dx dx) (* dy dy)))))
+  (make-dirty))

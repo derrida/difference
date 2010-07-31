@@ -25,3 +25,6 @@
 
 # Editor backups
 *~
+
+# Project Specific
+saves.lisp
